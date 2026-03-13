@@ -1,6 +1,6 @@
 name: Display hostname
 
-on: push
+on: [push]
 
 jobs:
   display-hostname:
@@ -8,3 +8,22 @@ jobs:
     steps:
       - name: Run hostname command
         run: hostname
+
+  delivery:
+    runs-on: ubuntu-latest
+    needs: display-hostname
+    steps:
+      - name: Checkout repository code into runner
+        uses: actions/checkout@v2
+
+      - name: Build the Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/test-website:latest .
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push the image to Docker Hub
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/test-website:latest
